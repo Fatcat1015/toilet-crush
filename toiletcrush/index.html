@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>马桶对对碰 - 趣味休闲游戏</title>
+        <link rel="icon" href="sprites/toilet_norm/toile_norm_white.png?v=1" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* 像素显示的渲染模式 */
+        img {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        /* 不显示物品栏 */
+        .color-counts {
+            display: none;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 背景装饰 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+        
+        h1 {
+            background: linear-gradient(90deg, #ff9966, #ff5e62, #ff6b6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(255, 153, 102, 0.5), 0 0 20px rgba(255, 94, 98, 0.3);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(255, 153, 102, 0.8), 0 0 30px rgba(255, 94, 98, 0.5);
+            }
+        }
+        
+        .game-container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            transition: all 0.3s ease;
+        }
+        
+        .game-container:hover {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .info-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-buttons #remove-box {
+            width: 60px;
+            height: 60px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 18.75px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: scale(0.9);
+        }
+        
+        .info-buttons #remove-box:hover {
+            transform: scale(0.92);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+            border-color: #4CAF50;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            margin: 0 20px;
+        }
+        
+        .info-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .grid-cell {
+            width: 110px;
+            height: 110px;
+            border: 3px solid #e0e0e0;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .grid-cell:not([style*="background-color"]) {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+        }
+        
+        .grid-cell:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .grid-cell[style*="background-color"] {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .grid-cell[style*="background-color"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(0,0,0,0.1));
+            border-radius: 8px;
+            z-index: 0;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .control-label {
+            width: 100px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .color-option:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .color-option.selected {
+            border-color: #333;
+            transform: scale(1.2);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.25);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #45a049, #3d8b40);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .controls-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 25px 40px;
+            border-radius: 6px;
+            font-size: 28px;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .color-counts {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .color-counts:hover {
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+        }
+        
+        .color-counts h3 {
+            color: #495057;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .pool-inventory {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .pool-section h4 {
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .pool-section .color-count-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .color-count-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .color-count-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .color-count-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .color-count-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .color-count-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .color-count-value {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            margin-left: auto;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-15px);
+            }
+            60% {
+                transform: translateY(-8px);
+            }
+        }
+        
+        @keyframes toiletBounce {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-20px) rotate(8deg);
+            }
+            50% {
+                transform: translateY(0) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-20px) rotate(-8deg);
+            }
+        }
+        
+        .toilet-bounce {
+            animation: toiletBounce 1s ease-in-out;
+        }
+        
+        #remove-box {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 18.75px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: scale(0.9);
+        }
+        
+        #remove-box:hover {
+            transform: scale(0.92);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+            border-color: #4CAF50;
+        }
+        
+        #super-rare-toilet {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px dashed #ff6b6b;
+            border-radius: 8px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+            transition: all 0.3s ease;
+        }
+        
+        #super-rare-toilet:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.2);
+        }
+        
+        #lucky-toilet-box {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        #lucky-toilet-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+        
+        #lucky-toilet {
+            font-size: 56px;
+            transition: all 0.3s ease;
+        }
+        
+        #lucky-toilet:hover {
+            animation: toiletBounce 1s ease-in-out;
+        }
+        
+        /* 市场样式 */
+        #market-container {
+            display: none;
+            width: 800px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 25px;
+            border-radius: 6px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .market-sections {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .market-section {
+            flex: 1;
+        }
+        
+        #market-container:hover {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        #market-container h3 {
+            color: #495057;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        #market-prices {
+            margin-bottom: 25px;
+        }
+        
+        #market-prices h4 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .price-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .price-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .toilet-icon {
+            width: 30px;
+            height: 30px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .price-info {
+            flex: 1;
+        }
+        
+        .price-change {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 2px;
+            display: block;
+        }
+        
+        .price-change.positive {
+            color: red;
+        }
+        
+        .price-change.negative {
+            color: green;
+        }
+        
+        .pool-prices {
+            margin-bottom: 20px;
+        }
+        
+        .pool-prices h5 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        #market-toilets {
+            margin-bottom: 25px;
+        }
+        
+        #market-toilets h4 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        #toilet-list {
+            display: block;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        /* 主容器样式 */
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 30px;
+        }
+        
+        /* 奖池按钮容器样式 */
+        .pool-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-right: 20px;
+        }
+        
+        .pool-buttons .btn {
+            width: 100%;
+        }
+        
+        /* 幸运色马桶标签样式 */
+        .lucky-toilet-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-top: 5px;
+        }
+        
+        /* 抽奖按钮容器样式 */
+        .draw-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* 倍速按钮容器样式 */
+        .speed-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 250px;
+        }
+        
+        .sidebar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .sidebar-buttons #remove-box {
+            flex: 1;
+        }
+        
+        .sidebar-buttons #toggle-market {
+            flex: 1;
+        }
+        
+        /* 价格网格样式 */
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+        
+        /* 市场按钮容器样式 */
+        .market-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .market-buttons .btn {
+            width: 100%;
+        }
+        
+        /* 游戏内容容器样式 */
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        /* 九宫格区域样式 */
+        .grid-section {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* 控制区域样式 */
+        .controls-section {
+            width: 100%;
+        }
+        
+        /* 确保控制元素在同一行显示 */
+        .control-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            width: 100%;
+        }
+        
+        .control-label {
+            width: 80px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        
+        .draw-buttons,
+        .speed-buttons {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+        }
+        
+        .draw-buttons .btn,
+        .speed-buttons .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .controls-buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .controls-buttons .btn {
+            flex: 1;
+            white-space: nowrap;
+        }
+        
+        /* 颜色选项背景颜色 */
+        .color-option[data-color="red"] { background-color: red; }
+        .color-option[data-color="yellow"] { background-color: yellow; }
+        .color-option[data-color="blue"] { background-color: blue; }
+        .color-option[data-color="green"] { background-color: green; }
+        .color-option[data-color="orange"] { background-color: orange; }
+        .color-option[data-color="purple"] { background-color: purple; }
+        .color-option[data-color="black"] { background-color: black; }
+        .color-option[data-color="white"] { 
+            background-color: white; 
+            border: 1px solid #ddd;
+        }
+        .color-option[data-color="gray"] { background-color: gray; }
+        
+        /* 颜色计数背景颜色 */
+        .color-count-color[data-color="red"] { background-image: url('sprites/toile_norm_red.png'); }
+        .color-count-color[data-color="yellow"] { background-image: url('sprites/toile_norm_yellow.png'); }
+        .color-count-color[data-color="blue"] { background-image: url('sprites/toile_norm_blue.png'); }
+        .color-count-color[data-color="green"] { background-image: url('sprites/toile_norm_green.png'); }
+        .color-count-color[data-color="orange"] { background-image: url('sprites/toile_norm_orange.png'); }
+        .color-count-color[data-color="purple"] { background-image: url('sprites/toile_norm_purple.png'); }
+        .color-count-color[data-color="black"] { background-image: url('sprites/toile_norm_black.png'); }
+        .color-count-color[data-color="white"] { background-image: url('sprites/toile_norm_white.png'); }
+        .color-count-color[data-color="gray"] { background-image: url('sprites/toile_norm_grey.png'); }
+        .color-count-color[data-color="gold"] { background-image: url('sprites/toile_norm_gold.png'); }
+        .color-count-color[data-color="rosegold"] { background-image: url('sprites/toile_norm_pinkgold.png'); }
+        .color-count-color[data-color="blackgold"] { background-image: url('sprites/toile_norm_blackgold.png'); }
+        
+        /* 移除框文本样式 */
+        #remove-box span {
+            color: #999;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        /* 超稀有马桶文本样式 */
+        #super-rare-toilet span {
+            color: #999;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* 市场价格文本样式 */
+        .price-item span:first-child {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .price-item span:last-child {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        #price-super-rare {
+            color: #ff6b6b !important;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-container {
+                max-width: 700px;
+            }
+            
+            .game-container {
+                width: 380px;
+                padding: 25px;
+            }
+            
+            .grid-cell {
+                width: 100px;
+                height: 100px;
+                font-size: 28px;
+            }
+            
+            .sidebar {
+                width: 220px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+            
+
+            
+            .game-container {
+                width: 350px;
+                padding: 20px;
+            }
+            
+            .grid-cell {
+                width: 90px;
+                height: 90px;
+                font-size: 24px;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-width: 400px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .color-counts {
+                flex: 1;
+                min-width: 300px;
+            }
+            
+            #remove-box {
+                flex: 1;
+                min-width: 150px;
+            }
+            
+            #super-rare-toilet {
+                flex: 1;
+                min-width: 150px;
+            }
+            
+            #toggle-market {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 20px;
+            }
+            
+            .main-container {
+                gap: 20px;
+            }
+            
+
+            
+            .game-container {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .grid-cell {
+                width: 80px;
+                height: 80px;
+                font-size: 20px;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .control-label {
+                width: 100%;
+            }
+            
+            .draw-buttons,
+            .speed-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .controls-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .sidebar {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .color-counts {
+                width: 100%;
+            }
+            
+            #remove-box,
+            #super-rare-toilet {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>马桶对对碰</h1>
+    
+    <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 5px;">
+        <button class="btn btn-secondary" data-speed="1" style="padding: 5px 10px; font-size: 12px;">1x</button>
+        <button class="btn btn-secondary" data-speed="2" style="padding: 5px 10px; font-size: 12px;">2x</button>
+        <button class="btn btn-secondary" data-speed="4" style="padding: 5px 10px; font-size: 12px;">4x</button>
+    </div>
+    
+    <div class="game-info">
+        <div class="info-item">
+            <div class="info-label">剩余金币</div>
+            <div class="info-value" id="coins">100</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">剩余抽数</div>
+            <div class="info-value" id="remaining-draws">0</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">当前奖池</div>
+            <div class="info-value" id="current-pool">N奖池 (1金币/抽)</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">幸运色</div>
+            <div id="lucky-toilet-box">
+                <div id="lucky-toilet">🚽</div>
+            </div>
+        </div>
+        <div class="info-buttons">
+            <div id="remove-box">
+                <img src="sprites/backpack.png" style="width: 100%; height: 100%; object-fit: contain;">
+            </div>
+            <button id="toggle-market" class="btn btn-secondary">打开市场</button>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="pool-buttons">
+            <button class="btn btn-secondary" data-pool="N">N奖池</button>
+            <button class="btn btn-secondary" data-pool="R">R奖池</button>
+            <button class="btn btn-secondary" data-pool="UR">UR奖池</button>
+            <button class="btn btn-secondary" id="rules-btn">游戏规则</button>
+        </div>
+        
+        <!-- 游戏规则弹窗 -->
+        <div id="rules-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); z-index: 2000; width: 400px; max-width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #333;">游戏规则</h3>
+                <button id="close-rules" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; color: #666;">加抽规则</h4>
+                <ul style="list-style-type: none; padding: 0; margin: 10px 0;">
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        横向/纵向/斜向三连：+2抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        3连号的同色马桶：+2抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        对子：+1抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        九色齐全：+3抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        幸运色：+1抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        超稀有马桶：+3抽
+                    </li>
+                </ul>
+                <h4 style="margin-top: 20px; color: #666;">超稀有马桶几率</h4>
+                <ul style="list-style-type: none; padding: 0; margin: 10px 0;">
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        N奖池：3%
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        R奖池：2%
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        UR奖池：1%
+                    </li>
+                </ul>
+                <h4 style="margin-top: 20px; color: #666;">奖池价格</h4>
+                <ul style="list-style-type: none; padding: 0; margin: 10px 0;">
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        N奖池：1金币/抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        R奖池：2金币/抽
+                    </li>
+                    <li style="margin-bottom: 5px; padding-left: 15px; position: relative;">
+                        <span style="position: absolute; left: 0; color: #4CAF50;">•</span>
+                        UR奖池：5金币/抽
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- 遮罩层 -->
+        <div id="rules-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1999;"></div>
+        <div class="game-container">
+            <div class="game-content">
+                <div class="grid-section">
+                    <div class="grid-container" id="grid">
+                        <div class="grid-cell" data-index="0"></div>
+                        <div class="grid-cell" data-index="1"></div>
+                        <div class="grid-cell" data-index="2"></div>
+                        <div class="grid-cell" data-index="3"></div>
+                        <div class="grid-cell" data-index="4"></div>
+                        <div class="grid-cell" data-index="5"></div>
+                        <div class="grid-cell" data-index="6"></div>
+                        <div class="grid-cell" data-index="7"></div>
+                        <div class="grid-cell" data-index="8"></div>
+                    </div>
+                </div>
+                <div class="controls-section">
+                    <div class="controls">
+                        <div class="control-row">
+                            <label class="control-label">抽几发</label>
+                            <div class="draw-buttons">
+                                <button class="btn btn-secondary" data-draw-count="12">12发</button>
+                                <button class="btn btn-secondary" data-draw-count="24">24发</button>
+                                <button class="btn btn-secondary" data-draw-count="48">48发</button>
+                            </div>
+                            <input type="hidden" id="draw-count" value="12">
+                            <div id="cost-display" style="margin-left: 10px; font-weight: bold; color: #4CAF50;">需要金币: 12</div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <label class="control-label">许愿色</label>
+                            <div class="color-picker" id="wish-color-picker">
+                <div class="color-option" data-color="white"></div>
+                <div class="color-option" data-color="red"></div>
+                <div class="color-option" data-color="yellow"></div>
+                <div class="color-option" data-color="blue"></div>
+                <div class="color-option" data-color="green"></div>
+                <div class="color-option" data-color="orange"></div>
+                <div class="color-option" data-color="purple"></div>
+                <div class="color-option" data-color="black"></div>
+                <div class="color-option" data-color="gray"></div>
+            </div>
+                        </div>
+                        
+                        <div class="controls-buttons">
+                            <button class="btn btn-primary" id="draw-btn">开始抽奖</button>
+                            <button class="btn btn-secondary" id="reset-btn">重置游戏</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="color-counts">
+                <h3>物品栏</h3>
+                <div class="pool-inventory">
+                    <!-- N奖池物品 -->
+                    <div class="pool-section">
+                        <h4>N奖池</h4>
+                        <div class="color-count-list" id="color-counts-N">
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="red" data-pool="N"></div>
+                                <span class="color-count-value" id="count-red-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="yellow" data-pool="N"></div>
+                                <span class="color-count-value" id="count-yellow-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="blue" data-pool="N"></div>
+                                <span class="color-count-value" id="count-blue-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="green" data-pool="N"></div>
+                                <span class="color-count-value" id="count-green-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="orange" data-pool="N"></div>
+                                <span class="color-count-value" id="count-orange-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="purple" data-pool="N"></div>
+                                <span class="color-count-value" id="count-purple-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="black" data-pool="N"></div>
+                                <span class="color-count-value" id="count-black-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="white" data-pool="N"></div>
+                                <span class="color-count-value" id="count-white-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="gray" data-pool="N"></div>
+                                <span class="color-count-value" id="count-gray-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="gold" data-pool="N"></div>
+                                <span class="color-count-value" id="count-gold-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="rosegold" data-pool="N"></div>
+                                <span class="color-count-value" id="count-rosegold-N">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="blackgold" data-pool="N"></div>
+                                <span class="color-count-value" id="count-blackgold-N">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- R奖池物品 -->
+                    <div class="pool-section">
+                        <h4>R奖池</h4>
+                        <div class="color-count-list" id="color-counts-R">
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="red" data-pool="R"></div>
+                                <span class="color-count-value" id="count-red-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="yellow" data-pool="R"></div>
+                                <span class="color-count-value" id="count-yellow-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="blue" data-pool="R"></div>
+                                <span class="color-count-value" id="count-blue-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="green" data-pool="R"></div>
+                                <span class="color-count-value" id="count-green-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="orange" data-pool="R"></div>
+                                <span class="color-count-value" id="count-orange-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="purple" data-pool="R"></div>
+                                <span class="color-count-value" id="count-purple-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="black" data-pool="R"></div>
+                                <span class="color-count-value" id="count-black-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="white" data-pool="R"></div>
+                                <span class="color-count-value" id="count-white-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="gray" data-pool="R"></div>
+                                <span class="color-count-value" id="count-gray-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="gold" data-pool="R"></div>
+                                <span class="color-count-value" id="count-gold-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="rosegold" data-pool="R"></div>
+                                <span class="color-count-value" id="count-rosegold-R">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="blackgold" data-pool="R"></div>
+                                <span class="color-count-value" id="count-blackgold-R">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- UR奖池物品 -->
+                    <div class="pool-section">
+                        <h4>UR奖池</h4>
+                        <div class="color-count-list" id="color-counts-UR">
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="red" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-red-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="yellow" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-yellow-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="blue" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-blue-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="green" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-green-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="orange" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-orange-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="purple" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-purple-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="black" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-black-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="white" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-white-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="gray" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-gray-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="gold" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-gold-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="rosegold" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-rosegold-UR">0</span>
+                            </div>
+                            <div class="color-count-item">
+                                <div class="color-count-color" data-color="blackgold" data-pool="UR"></div>
+                                <span class="color-count-value" id="count-blackgold-UR">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 市场区域 -->
+        <div id="market-container">
+            <h3>马桶市场</h3>
+            <div id="price-fluctuation-info" style="font-size: 12px; color: #666; margin-bottom: 15px; text-align: center;">
+                每分钟马桶价格浮动，下一次变动：<span id="price-countdown">60</span>秒
+            </div>
+            
+            <div class="market-sections">
+                <!-- 马桶市场部分 -->
+                <div class="market-section">
+                    <h4>市场价格</h4>
+                    <div id="market-prices">
+                        <!-- N奖池价格 -->
+                        <div class="pool-prices">
+                            <div class="price-grid" id="price-grid-N">
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="red" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-red-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-red-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="yellow" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-yellow-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-yellow-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="blue" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-blue-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-blue-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="green" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-green-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-green-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="orange" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-orange-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-orange-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="purple" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-purple-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-purple-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="black" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-black-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-black-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="white" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-white-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-white-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="gray" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-gray-N">0.5 金币</span>
+                                        <span class="price-change" id="price-change-gray-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="gold" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-gold-N">20 金币</span>
+                                        <span class="price-change" id="price-change-gold-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="rosegold" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-rosegold-N">25 金币</span>
+                                        <span class="price-change" id="price-change-rosegold-N"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="blackgold" data-pool="N"></div>
+                                    <div class="price-info">
+                                        <span id="price-blackgold-N">30 金币</span>
+                                        <span class="price-change" id="price-change-blackgold-N"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- R奖池价格 -->
+                        <div class="pool-prices">
+                            <div class="price-grid" id="price-grid-R">
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="red" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-red-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-red-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="yellow" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-yellow-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-yellow-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="blue" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-blue-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-blue-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="green" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-green-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-green-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="orange" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-orange-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-orange-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="purple" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-purple-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-purple-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="black" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-black-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-black-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="white" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-white-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-white-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="gray" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-gray-R">1.0 金币</span>
+                                        <span class="price-change" id="price-change-gray-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="gold" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-gold-R">20 金币</span>
+                                        <span class="price-change" id="price-change-gold-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="rosegold" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-rosegold-R">25 金币</span>
+                                        <span class="price-change" id="price-change-rosegold-R"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="blackgold" data-pool="R"></div>
+                                    <div class="price-info">
+                                        <span id="price-blackgold-R">30 金币</span>
+                                        <span class="price-change" id="price-change-blackgold-R"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- UR奖池价格 -->
+                        <div class="pool-prices">
+                            <div class="price-grid" id="price-grid-UR">
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="red" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-red-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-red-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="yellow" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-yellow-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-yellow-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="blue" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-blue-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-blue-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="green" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-green-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-green-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="orange" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-orange-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-orange-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="purple" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-purple-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-purple-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="black" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-black-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-black-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="white" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-white-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-white-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="gray" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-gray-UR">3.0 金币</span>
+                                        <span class="price-change" id="price-change-gray-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="gold" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-gold-UR">20 金币</span>
+                                        <span class="price-change" id="price-change-gold-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="rosegold" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-rosegold-UR">25 金币</span>
+                                        <span class="price-change" id="price-change-rosegold-UR"></span>
+                                    </div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="toilet-icon" data-color="blackgold" data-pool="UR"></div>
+                                    <div class="price-info">
+                                        <span id="price-blackgold-UR">30 金币</span>
+                                        <span class="price-change" id="price-change-blackgold-UR"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 我的马桶部分 -->
+                <div class="market-section">
+                    <h4>我的马桶</h4>
+                    <div id="market-toilets">
+                        <div id="toilet-list">
+                            <!-- 马桶卖出选项将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="market-buttons">
+                <button id="sell-selected" class="btn btn-primary">卖出选中</button>
+                <button id="sell-all-except-super-rare" class="btn btn-secondary">卖出除超稀有外所有</button>
+                <button id="close-market" class="btn btn-secondary">关闭市场</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <audio id="place-sound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAD/" type="audio/wav">
+    </audio>
+    
+    <audio id="coin-sound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAD/" type="audio/wav">
+    </audio>
+    
+    <script src="game.js"></script>
+</body>
+</html>
